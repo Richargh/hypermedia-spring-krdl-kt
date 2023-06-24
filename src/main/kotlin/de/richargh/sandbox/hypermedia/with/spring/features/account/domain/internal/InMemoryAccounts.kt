@@ -7,9 +7,14 @@ import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryAccounts {
     private val items = ConcurrentHashMap<AccountId, Account>()
+
+    fun all(): Sequence<Account> {
+        return items.values.asSequence()
+    }
+
     operator fun get(id: AccountId): Account {
         val item = items[id]
-        if(item != null)
+        if (item != null)
             return item
         else
             throw ItemNotFound(id.rawValue, "Account")

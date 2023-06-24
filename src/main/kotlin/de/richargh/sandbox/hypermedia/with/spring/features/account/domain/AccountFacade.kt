@@ -7,6 +7,11 @@ import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.intern
 class AccountFacade(
         private val accounts: InMemoryAccounts
 ) {
+
+    fun all(): Sequence<Account> {
+        return accounts.all()
+    }
+
     operator fun get(id: AccountId): Account {
         return accounts[id]
     }
