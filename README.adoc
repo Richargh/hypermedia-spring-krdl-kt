@@ -1,0 +1,19 @@
+= Hypermedia with Spring Hateoas (Sandbox)
+
+Little Sandbox to play around with Spring Hateoas.
+
+**Features:**
+
+* Hypermedia
+* Spring Hateoas
+
+== Getting started
+
+. Use the link:.sdkmanrc[.sdkmanrc] java version: `sdk env use`
+. Start the backend: `./gradlew run`
+. Explore
+
+Or at your own leasure:
+
+* Run tests: `./gradlew test`
+
