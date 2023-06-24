@@ -12,7 +12,7 @@ fun addInitialData(context: GenericApplicationContext){
 private fun addAccountData(context: GenericApplicationContext){
     val accounts = context.getBean(InMemoryAccounts::class.java)
 
-    accounts += Account(AccountId("1"), "one")
-    accounts += Account(AccountId("2"), "two")
-    accounts += Account(AccountId("3"), "three")
+    accounts += Account(AccountId("1"), "one", 10)
+    accounts += Account(AccountId("2"), "two", 50)
+    accounts += Account(AccountId("3"), "three", 100)
 }

@@ -4,16 +4,85 @@ Little Sandbox to play around with Spring Hateoas.
 
 **Features:**
 
-* Hypermedia
+* Hypermedia: HAL and link:https://rwcbook.github.io/hal-forms/[HAL-FORMS]
 * Spring Hateoas
+* link:https://github.com/toedter/hal-explorer[Hal-Explorer] (after starting visit http://localhost:8080)
 
 == Getting started
 
 . Use the link:.sdkmanrc[.sdkmanrc] java version: `sdk env use`
 . Start the backend: `./gradlew run`
-. Explore
+. Explore via curl or httpie
 
 Or at your own leasure:
 
 * Run tests: `./gradlew test`
 
+== Explore
+
+NOTE: All Controller methods are explicitly annotated with `produces = ["application/prs.hal-forms+json"]`, otherwise the server only answers with hal-forms if the client understands it, leaving you wondering where `"_templates": [...]` is in your json response.
+
+The root gives us information where we can reach other items.
+
+.http GET localhost:8080/accounts/
+[source,json]
+----
+{
+    {
+        "_embedded": {
+            "accountDtoes": [
+                {
+                    "_id": "1",
+                    "_links": {
+                        "self": {
+                            "href": "http://localhost:8080/accounts/1"
+                        }
+                    },
+                    "balance": 1,
+                    "name": "one"
+                }
+            ]
+        }
+    }
+}
+----
+
+Notice that when we withdraw 9 credits we still have the option to withdraw more, but should the balance go to zero we can no longer withdraw and only deposit.
+Affordances at work :)
+
+.http POST localhost:8080/accounts/1/withdraw amount=9
+[source,json]
+----
+{
+    "balance": 1,
+    "name": "one",
+    "_templates": {
+        "default": {
+            "method": "POST",
+            "properties": [
+                {
+                    "name": "amount",
+                    "readOnly": true,
+                    "type": "number"
+                }
+            ],
+            "target": "http://localhost:8080/accounts/1/withdraw"
+        },
+        "deposit": {
+            "method": "POST",
+            "properties": [
+                {
+                    "name": "amount",
+                    "readOnly": true,
+                    "type": "number"
+                }
+            ],
+            "target": "http://localhost:8080/accounts/1/deposit"
+        }
+    }
+}
+----
+
+== Further Reading
+
+* link:https://github.com/spring-projects/spring-hateoas-examples/tree/main/affordances[Spring Hateoas Affordances Examples]
