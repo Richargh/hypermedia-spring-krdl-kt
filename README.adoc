@@ -10,6 +10,7 @@ Little Sandbox to play around with Spring Hateoas.
 ** link:https://datatracker.ietf.org/doc/html/rfc6570[URI Templates] like `/owners{?limit,offspring}`
 * Spring Hateoas
 ** inkl. link:https://docs.spring.io/spring-hateoas/docs/1.2.2/reference/html/#mediatypes.hal.curie-provider[CURIEs (Compact URIs)] which are used to scope custom **rel**s because they are not registered link:https://www.iana.org/assignments/link-relations/link-relations.xhtml[IANA link relation types].
+** link:https://docs.spring.io/spring-hateoas/docs/current/reference/html/#server.link-builder.forwarded-headers[Forwarded header handling] for applications behind a proxy where `href` Links should not point to localhost
 * link:https://github.com/toedter/hal-explorer[Hal-Explorer] (after starting the backend visit http://localhost:8080)
 
 == Getting started
