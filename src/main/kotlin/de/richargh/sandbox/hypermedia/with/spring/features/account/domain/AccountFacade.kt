@@ -20,14 +20,6 @@ class AccountFacade(
         return Pair(account, affordances(account))
     }
 
-    fun create(name: String): Account {
-        val id = AccountId(accounts.count().toString())
-        val account = Account(id, name, 0)
-        accounts += account
-
-        return account
-    }
-
     fun deposit(id: AccountId, amount: Int): Account {
         val account = accounts[id]
         if (!affordances(account).contains(AccountAffordance.DEPOSIT))

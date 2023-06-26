@@ -6,6 +6,7 @@ Little Sandbox to play around with Spring Hateoas.
 
 * Hypermedia: HAL and link:https://rwcbook.github.io/hal-forms/[HAL-FORMS]
 * Spring Hateoas
+** link:https://docs.spring.io/spring-hateoas/docs/1.2.2/reference/html/#mediatypes.hal.curie-provider[CURIEs (Compact URIs)], used to scope custom **rel**s because they are not registered link:https://www.iana.org/assignments/link-relations/link-relations.xhtml[IANA link relation types].
 * link:https://github.com/toedter/hal-explorer[Hal-Explorer] (after starting visit http://localhost:8080)
 
 == Getting started

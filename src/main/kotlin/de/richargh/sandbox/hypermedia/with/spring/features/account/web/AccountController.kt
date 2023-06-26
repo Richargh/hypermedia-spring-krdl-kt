@@ -8,6 +8,8 @@ import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.dto.Ac
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.dto.DepositDto
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.dto.WithdrawDto
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.translate.toDto
+import de.richargh.sandbox.hypermedia.with.spring.features.owners.web.OwnerController
+import de.richargh.sandbox.hypermedia.with.spring.features.owners.web.OwnerRelations
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.Link
@@ -21,22 +23,24 @@ class AccountController(
         @Autowired private val accountFacade: AccountFacade
 ) {
 
-    @GetMapping(value = ["/"], produces = ["application/prs.hal-forms+json"])
+    @GetMapping(value = [""], produces = ["application/prs.hal-forms+json"])
     fun getAccounts(): CollectionModel<AccountDto> {
         val accounts = accountFacade.all()
         val dtos = accounts
                 .map { it -> it.toDto() }
                 .map {
-                    val selfLink: Link = linkTo(
-                            methodOn(AccountController::class.java).getAccountById(it._id)
-                    ).withSelfRel()
+                    val selfLink: Link = linkTo(methodOn(AccountController::class.java).getAccountById(it._id))
+                            .withSelfRel()
+                    val ownerLink = linkTo(methodOn(OwnerController::class.java).getOwnerById(it._ownerid))
+                            .withRel("owner")
 
-                    it.add(selfLink)
+                    it.add(selfLink, ownerLink)
                 }
                 .toList()
 
-        val link: Link = linkTo(AccountController::class.java).withSelfRel()
-        return CollectionModel.of(dtos, link)
+        val selfLink: Link = linkTo(AccountController::class.java).withSelfRel()
+        val ownerLink: Link = linkTo(OwnerController::class.java).withRel(OwnerRelations.owner)
+        return CollectionModel.of(dtos, selfLink, ownerLink)
     }
 
     @GetMapping("/{rawAccountId}", produces = ["application/prs.hal-forms+json"])
@@ -44,15 +48,14 @@ class AccountController(
         val (account, affordances) = accountFacade[AccountId(rawAccountId)]
         val dto = account.toDto()
 
-        var links: Link = linkTo(
-                methodOn(AccountController::class.java).getAccountById(dto._id)
-        ).withSelfRel()
+        var links: Link = linkTo(methodOn(AccountController::class.java).getAccountById(dto._id)).withSelfRel()
         if (affordances.contains(AccountAffordance.WITHDRAW))
             links = links.andAffordance(afford(methodOn(AccountController::class.java).withdraw(rawAccountId, null)))
         if (affordances.contains(AccountAffordance.DEPOSIT))
             links = links.andAffordance(afford(methodOn(AccountController::class.java).deposit(rawAccountId, null)))
-
-        dto.add(links)
+        val ownerLink = linkTo(methodOn(OwnerController::class.java).getOwnerById(dto._ownerid))
+                .withRel(OwnerRelations.owner)
+        dto.add(links, ownerLink)
 
         return dto
     }

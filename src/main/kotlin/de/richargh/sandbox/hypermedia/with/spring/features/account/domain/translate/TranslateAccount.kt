@@ -4,6 +4,7 @@ import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.Ac
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.dto.AccountDto
 
 fun Account.toDto() = AccountDto(
-        this.id.rawValue,
-        this.name,
-        this.balance)
+        id.rawValue,
+        owner.rawValue,
+        name,
+        balance)
