@@ -1,6 +1,8 @@
 package de.richargh.sandbox.hypermedia.with.spring.features.account.domain.internal
 
 import de.richargh.sandbox.hypermedia.with.spring.commons.error.ItemNotFound
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchParams
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchResult
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.Account
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.AccountId
 import org.slf4j.Logger
@@ -10,8 +12,14 @@ import java.util.concurrent.ConcurrentHashMap
 class InMemoryAccounts {
     private val items = ConcurrentHashMap<AccountId, Account>()
 
-    fun all(): Sequence<Account> {
-        return items.values.asSequence()
+    fun search(params: SearchParams): SearchResult<Account> {
+        val subItems = items.values.asSequence()
+                .filterIndexed { index, _ -> index >= params.offset }
+                .take(params.limit)
+                .toList()
+        val hasNext = subItems.isNotEmpty() && items.size - subItems.size - params.offset > 0
+        val hasPrevious = subItems.isNotEmpty() && params.offset > 0
+        return SearchResult(subItems, hasNext = hasNext, hasPrevious = hasPrevious)
     }
 
     fun count(): Int {

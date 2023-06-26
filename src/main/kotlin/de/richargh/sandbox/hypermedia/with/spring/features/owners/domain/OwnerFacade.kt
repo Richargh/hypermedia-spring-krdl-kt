@@ -1,5 +1,7 @@
 package de.richargh.sandbox.hypermedia.with.spring.features.owners.domain
 
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchParams
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchResult
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.api.Owner
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.api.OwnerAffordance
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.api.OwnerId
@@ -9,8 +11,8 @@ class OwnerFacade(
         private val owners: InMemoryOwners
 ) {
 
-    fun all(): Sequence<Owner> {
-        return owners.all()
+    fun search(params: SearchParams): SearchResult<Owner> {
+        return owners.search(params)
     }
 
     operator fun get(id: OwnerId): Pair<Owner, List<OwnerAffordance>> {

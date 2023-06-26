@@ -1,5 +1,6 @@
 package de.richargh.sandbox.hypermedia.with.spring.features.owners.web
 
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchParams
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.OwnerFacade
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.api.OwnerId
 import de.richargh.sandbox.hypermedia.with.spring.features.owners.domain.dto.OwnerDto
@@ -21,32 +22,45 @@ class OwnerController(
 ) {
 
     @GetMapping(value = [""], produces = ["application/prs.hal-forms+json"])
-    fun getAccounts(): CollectionModel<OwnerDto> {
-        val accounts = ownerFacade.all()
-        val dtos = accounts
+    fun search(limit: Int?, offset: Int?): CollectionModel<OwnerDto> {
+        val searchParams = SearchParams.of(limit = limit, offset = offset)
+        val result = ownerFacade.search(searchParams)
+        val dtos = result.items
                 .map { it -> it.toDto() }
                 .map {
-                    val selfLink: Link = linkTo(
-                            methodOn(OwnerController::class.java).getOwnerById(it._id)
-                    ).withSelfRel()
-
+                    val selfLink: Link = linkTo(methodOn(OwnerController::class.java).findOne(it._id)).withSelfRel()
                     it.add(selfLink)
                 }
                 .toList()
 
-        val link: Link = linkTo(OwnerController::class.java).withSelfRel()
-        return CollectionModel.of(dtos, link)
+        val links = mutableListOf<Link>()
+        links.add(linkTo(OwnerController::class.java).withSelfRel())
+        if (result.hasPrevious) {
+            val previousParams = searchParams.previous()
+            links.add(Link.of("http://localhost:8080/owners{?limit,offset}")
+                    .expand(mapOf("limit" to previousParams.limit, "offset" to previousParams.offset))
+                    .withRel("previous"))
+        }
+        if (result.hasNext) {
+            val nextParams = searchParams.next()
+            links.add(Link.of("http://localhost:8080/owners{?limit,offset}")
+                    .expand(mapOf("limit" to nextParams.limit, "offset" to nextParams.offset))
+                    .withRel("next"))
+        }
+
+        return CollectionModel.of(dtos, links)
     }
 
 
     @GetMapping("/{rawOwnerId}", produces = ["application/prs.hal-forms+json"])
-    fun getOwnerById(@PathVariable rawOwnerId: String): OwnerDto {
+    fun findOne(@PathVariable rawOwnerId: String): OwnerDto {
         val (account) = ownerFacade[OwnerId(rawOwnerId)]
         val dto = account.toDto()
 
-        val links: Link = linkTo(methodOn(OwnerController::class.java).getOwnerById(dto._id)).withSelfRel()
+        val links: Link = linkTo(methodOn(OwnerController::class.java).findOne(dto._id)).withSelfRel()
         dto.add(links)
 
         return dto
     }
+
 }

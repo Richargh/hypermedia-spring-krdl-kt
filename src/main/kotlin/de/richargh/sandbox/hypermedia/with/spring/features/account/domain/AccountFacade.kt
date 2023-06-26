@@ -1,6 +1,8 @@
 package de.richargh.sandbox.hypermedia.with.spring.features.account.domain
 
 import de.richargh.sandbox.hypermedia.with.spring.commons.error.AffordanceNotAvailable
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchParams
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchResult
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.Account
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.AccountAffordance
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.AccountId
@@ -10,8 +12,8 @@ class AccountFacade(
         private val accounts: InMemoryAccounts
 ) {
 
-    fun all(): Sequence<Account> {
-        return accounts.all()
+    fun search(params: SearchParams): SearchResult<Account> {
+        return accounts.search(params)
     }
 
     operator fun get(id: AccountId): Pair<Account, List<AccountAffordance>> {

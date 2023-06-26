@@ -1,6 +1,7 @@
 package de.richargh.sandbox.hypermedia.with.spring.features.account.web
 
 import de.richargh.sandbox.hypermedia.with.spring.commons.error.InvalidBody
+import de.richargh.sandbox.hypermedia.with.spring.commons.search.SearchParams
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.AccountFacade
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.AccountAffordance
 import de.richargh.sandbox.hypermedia.with.spring.features.account.domain.api.AccountId
@@ -24,36 +25,51 @@ class AccountController(
 ) {
 
     @GetMapping(value = [""], produces = ["application/prs.hal-forms+json"])
-    fun getAccounts(): CollectionModel<AccountDto> {
-        val accounts = accountFacade.all()
+    fun search(limit: Int?, offset: Int?): CollectionModel<AccountDto> {
+        val searchParams = SearchParams.of(limit = limit, offset = offset)
+        val result = accountFacade.search(searchParams)
+        val accounts = result.items
         val dtos = accounts
                 .map { it -> it.toDto() }
                 .map {
-                    val selfLink: Link = linkTo(methodOn(AccountController::class.java).getAccountById(it._id))
+                    val selfLink: Link = linkTo(methodOn(AccountController::class.java).findOne(it._id))
                             .withSelfRel()
-                    val ownerLink = linkTo(methodOn(OwnerController::class.java).getOwnerById(it._ownerid))
+                    val ownerLink = linkTo(methodOn(OwnerController::class.java).findOne(it._ownerid))
                             .withRel("owner")
 
                     it.add(selfLink, ownerLink)
                 }
                 .toList()
 
-        val selfLink: Link = linkTo(AccountController::class.java).withSelfRel()
-        val ownerLink: Link = linkTo(OwnerController::class.java).withRel(OwnerRelations.owner)
-        return CollectionModel.of(dtos, selfLink, ownerLink)
+        val links = mutableListOf<Link>()
+        links.add(linkTo(OwnerController::class.java).withSelfRel())
+        links.add(linkTo(OwnerController::class.java).withRel(OwnerRelations.owner))
+        if (result.hasPrevious) {
+            val previousParams = searchParams.previous()
+            links.add(Link.of("http://localhost:8080/owners{?limit,offset}")
+                    .expand(mapOf("limit" to previousParams.limit, "offset" to previousParams.offset))
+                    .withRel("previous"))
+        }
+        if (result.hasNext) {
+            val nextParams = searchParams.next()
+            links.add(Link.of("http://localhost:8080/owners{?limit,offset}")
+                    .expand(mapOf("limit" to nextParams.limit, "offset" to nextParams.offset))
+                    .withRel("next"))
+        }
+        return CollectionModel.of(dtos, links)
     }
 
     @GetMapping("/{rawAccountId}", produces = ["application/prs.hal-forms+json"])
-    fun getAccountById(@PathVariable rawAccountId: String): AccountDto {
+    fun findOne(@PathVariable rawAccountId: String): AccountDto {
         val (account, affordances) = accountFacade[AccountId(rawAccountId)]
         val dto = account.toDto()
 
-        var links: Link = linkTo(methodOn(AccountController::class.java).getAccountById(dto._id)).withSelfRel()
+        var links: Link = linkTo(methodOn(AccountController::class.java).findOne(dto._id)).withSelfRel()
         if (affordances.contains(AccountAffordance.WITHDRAW))
             links = links.andAffordance(afford(methodOn(AccountController::class.java).withdraw(rawAccountId, null)))
         if (affordances.contains(AccountAffordance.DEPOSIT))
             links = links.andAffordance(afford(methodOn(AccountController::class.java).deposit(rawAccountId, null)))
-        val ownerLink = linkTo(methodOn(OwnerController::class.java).getOwnerById(dto._ownerid))
+        val ownerLink = linkTo(methodOn(OwnerController::class.java).findOne(dto._ownerid))
                 .withRel(OwnerRelations.owner)
         dto.add(links, ownerLink)
 
@@ -68,7 +84,7 @@ class AccountController(
 
         accountFacade.deposit(AccountId(rawAccountId), body.amount)
 
-        return getAccountById(rawAccountId)
+        return findOne(rawAccountId)
     }
 
     @PostMapping("/{rawAccountId}/withdraw", produces = ["application/prs.hal-forms+json"])
@@ -79,6 +95,6 @@ class AccountController(
 
         accountFacade.withdraw(AccountId(rawAccountId), body.amount)
 
-        return getAccountById(rawAccountId)
+        return findOne(rawAccountId)
     }
 }

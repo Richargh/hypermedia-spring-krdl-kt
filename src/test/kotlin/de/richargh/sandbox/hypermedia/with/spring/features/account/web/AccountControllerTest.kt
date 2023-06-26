@@ -24,11 +24,24 @@ class AccountControllerTest {
         // GIVEN
         val accountId = "1"
         // WHEN
-        val result = restTemplate.getForObject(ownersUrl(), CollectionModel::class.java)
+        val result = restTemplate.getForObject(accountsUrl(), CollectionModel::class.java)
         // THEN
         val content = result.content as Collection<Map<*, *>>
-        Assertions.assertThat(content.map { it["_id"] }).containsExactlyInAnyOrder("1", "2")
+        Assertions.assertThat(content.map { it["_id"] }).containsExactlyInAnyOrder("1", "2", "3")
         Assertions.assertThat(result.links.map { it.rel }).contains(LinkRelation.of("self"))
+    }
+
+    @Test
+    fun shouldReturnPagedAccountCollectionDto() {
+        // WHEN
+        val result = restTemplate.getForObject(searchAccountsUrl(limit = 1, offset = 1), CollectionModel::class.java)
+        // THEN
+        val content = result.content as Collection<Map<*, *>>
+        Assertions.assertThat(content.map { it["_id"] }).containsExactlyInAnyOrder("2")
+        val linkRelations = result.links.map { it.rel }
+        Assertions.assertThat(linkRelations).contains(LinkRelation.of("self"))
+        Assertions.assertThat(linkRelations).contains(LinkRelation.of("previous"))
+        Assertions.assertThat(linkRelations).contains(LinkRelation.of("next"))
     }
 
     @Test
@@ -36,12 +49,13 @@ class AccountControllerTest {
         // GIVEN
         val accountId = "1"
         // WHEN
-        val result = restTemplate.getForObject(ownerUrl(accountId), OwnerDto::class.java)
+        val result = restTemplate.getForObject(accountUrl(accountId), OwnerDto::class.java)
         // THEN
         Assertions.assertThat(result._id).isEqualTo(accountId)
         Assertions.assertThat(result.name).isNotBlank()
     }
 
-    private fun ownersUrl() = "http://localhost:$port/owners"
-    private fun ownerUrl(ownerId: String) = "${ownersUrl()}/$ownerId"
+    private fun accountsUrl() = "http://localhost:$port/accounts"
+    private fun searchAccountsUrl(limit: Int, offset: Int) = "${accountsUrl()}?limit=$limit&offset=$offset"
+    private fun accountUrl(accoundId: String) = "${accountsUrl()}/$accoundId"
 }
